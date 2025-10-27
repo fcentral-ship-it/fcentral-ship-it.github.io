@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Proveedores con Histórico</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .controls-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .upload-section, .filters-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .filters-section {
+            border-left-color: #e74c3c;
+        }
+        
+        .search-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"], input[type="file"], input[type="date"], select {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input[type="text"]:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .secondary-button {
+            background-color: #95a5a6;
+        }
+        
+        .secondary-button:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #3498db;
+        }
+        
+        .results-section {
+            margin-top: 20px;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .results-count {
+            color: #7f8c8d;
+        }
+        
+        .sort-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .sort-button {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .sort-button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .barcode {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .providers-list {
+            margin-top: 15px;
+        }
+        
+        .provider-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .provider-item:last-child {
+            border-bottom: none;
+        }
+        
+        .provider-item.discontinued {
+            background-color: #fff5f5;
+            opacity: 0.7;
+        }
+        
+        .provider-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .provider-price {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .provider-price.old-price {
+            color: #e74c3c;
+            text-decoration: line-through;
+        }
+        
+        .provider-stock {
+            color: #7f8c8d;
+        }
+        
+        .provider-date {
+            font-size: 12px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .filter-tag {
+            background: #e3f2fd;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .filter-tag button {
+            background: none;
+            border: none;
+            color: #666;
+            padding: 0;
+            font-size: 14px;
+        }
+        
+        .search-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .product-header {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .filter-buttons {
+                flex-direction: column;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .sort-options {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Buscador de Proveedores con Histórico</h1>
+            <p>Gestiona precios actuales e históricos de tus proveedores</p>
+        </header>
+        
+        <div class="instructions">
+            <h3>Instrucciones para CSV:</h3>
+            <ul>
+                <li><strong>Formato requerido:</strong> barcode,descripcion,proveedor_id,proveedor_nombre,precio,existencia,fecha</li>
+                <li><strong>Precios:</strong> Solo números (312.02) sin símbolo $</li>
+                <li><strong>Fechas:</strong> Formato DD-MMM (19-sep, 15-sep, 19-ago)</li>
+                <li><strong>Guardar como:</strong> CSV (delimitado por comas) desde Excel</li>
+            </ul>
+        </div>
+        
+        <div class="controls-section">
+            <div class="upload-section">
+                <h3>Cargar Archivo CSV</h3>
+                <div class="search-box">
+                    <input type="file" id="csvFile" accept=".csv">
+                    <button id="loadButton">Cargar Datos</button>
+                </div>
+                <div class="status" id="uploadStatus"></div>
+            </div>
+            
+            <div class="filters-section">
+                <h3>Filtros y Configuración</h3>
+                
+                <div class="filter-group">
+                    <label>Filtro por Fecha:</label>
+                    <div class="filter-row">
+                        <select id="dateFilter">
+                            <option value="latest">Mostrar últimos precios</option>
+                            <option value="all">Mostrar todo el histórico</option>
+                            <option value="specific">Mostrar fecha específica</option>
+                        </select>
+                        <input type="text" id="specificDate" placeholder="Ej: 19-sep" disabled>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Filtro por Sucursal:</label>
+                    <div class="filter-row">
+                        <select id="sucursalFilter">
+                            <option value="all">Todas las sucursales</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button id="showDiscontinued" class="secondary-button">Ocultar Descontinuados</button>
+                    <button id="resetFilters" class="secondary-button">Resetear Filtros</button>
+                </div>
+                <div class="filter-tags" id="activeFilters"></div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <p>Cargando y procesando datos...</p>
+            <p>Esto puede tomar unos segundos para archivos grandes</p>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar por descripción o código de barras..." disabled>
+                <button id="searchButton" disabled>Buscar</button>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            <div class="results-header">
+                <h2 id="resultsTitle">Resultados de búsqueda</h2>
+                <div class="sort-options">
+                    <span>Ordenar por:</span>
+                    <button class="sort-button active" data-sort="precio">Precio ↑</button>
+                    <button class="sort-button" data-sort="fecha">Fecha ↓</button>
+                    <button class="sort-button" data-sort="existencia">Existencia ↓</button>
+                </div>
+                <div class="results-count" id="resultsCount">Esperando datos...</div>
+            </div>
+            
+            <div id="searchInfo"></div>
+            
+            <div id="resultsContainer">
+                <div class="no-results">
+                    <h3>Primero carga tu archivo CSV</h3>
+                    <p>Usa el botón "Cargar Datos" arriba para comenzar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let productos = [];
+        let productosFiltrados = [];
+        let productosAgrupados = [];
+        let filtrosActivos = {
+            mostrarDescontinuados: true,
+            modoFecha: 'latest',
+            fechaEspecifica: null,
+            sucursal: 'all',
+            ordenamiento: 'precio',
+            ordenAscendente: true
+        };
+
+        // Elementos del DOM
+        const csvFileInput = document.getElementById('csvFile');
+        const loadButton = document.getElementById('loadButton');
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsCount = document.getElementById('resultsCount');
+        const resultsTitle = document.getElementById('resultsTitle');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const dateFilter = document.getElementById('dateFilter');
+        const specificDateInput = document.getElementById('specificDate');
+        const sucursalFilter = document.getElementById('sucursalFilter');
+        const showDiscontinuedButton = document.getElementById('showDiscontinued');
+        const resetFiltersButton = document.getElementById('resetFilters');
+        const activeFiltersContainer = document.getElementById('activeFilters');
+        const searchInfo = document.getElementById('searchInfo');
+        const sortButtons = document.querySelectorAll('.sort-button');
+
+        // Configurar event listeners para filtros
+        dateFilter.addEventListener('change', function() {
+            specificDateInput.disabled = this.value !== 'specific';
+            if (this.value === 'specific') {
+                specificDateInput.focus();
+            }
+            aplicarFiltros();
+        });
+
+        specificDateInput.addEventListener('input', function() {
+            filtrosActivos.fechaEspecifica = this.value.trim() || null;
+            aplicarFiltros();
+        });
+
+        sucursalFilter.addEventListener('change', function() {
+            filtrosActivos.sucursal = this.value;
+            aplicarFiltros();
+        });
+
+        showDiscontinuedButton.addEventListener('click', function() {
+            filtrosActivos.mostrarDescontinuados = !filtrosActivos.mostrarDescontinuados;
+            this.textContent = filtrosActivos.mostrarDescontinuados ? 
+                'Ocultar Descontinuados' : 'Mostrar Descontinuados';
+            aplicarFiltros();
+        });
+
+        resetFiltersButton.addEventListener('click', function() {
+            resetearFiltros();
+        });
+
+        // Event listeners para ordenamiento
+        sortButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sortType = this.getAttribute('data-sort');
+                
+                // Si es el mismo tipo, cambiar dirección
+                if (filtrosActivos.ordenamiento === sortType) {
+                    filtrosActivos.ordenAscendente = !filtrosActivos.ordenAscendente;
+                } else {
+                    // Si es nuevo tipo, resetear a ascendente
+                    filtrosActivos.ordenamiento = sortType;
+                    filtrosActivos.ordenAscendente = true;
+                }
+                
+                // Actualizar botones
+                sortButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Actualizar texto del botón
+                const direccion = filtrosActivos.ordenAscendente ? '↑' : '↓';
+                this.textContent = this.textContent.replace(/[↑↓]/, '') + ' ' + direccion;
+                
+                aplicarFiltros();
+            });
+        });
+
+        // Función para resetear filtros
+        function resetearFiltros() {
+            filtrosActivos = {
+                mostrarDescontinuados: true,
+                modoFecha: 'latest',
+                fechaEspecifica: null,
+                sucursal: 'all',
+                ordenamiento: 'precio',
+                ordenAscendente: true
+            };
+            
+            dateFilter.value = 'latest';
+            specificDateInput.value = '';
+            specificDateInput.disabled = true;
+            sucursalFilter.value = 'all';
+            showDiscontinuedButton.textContent = 'Ocultar Descontinuados';
+            
+            // Resetear botones de ordenamiento
+            sortButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-sort') === 'precio') {
+                    btn.classList.add('active');
+                    btn.textContent = 'Precio ↑';
+                } else {
+                    btn.textContent = btn.textContent.replace(/[↑↓]/, '');
+                }
+            });
+            
+            aplicarFiltros();
+            actualizarFiltrosActivos();
+        }
+
+        // Función para actualizar etiquetas de filtros activos
+        function actualizarFiltrosActivos() {
+            activeFiltersContainer.innerHTML = '';
+            
+            if (filtrosActivos.modoFecha === 'latest') {
+                activeFiltersContainer.innerHTML += `
+                    <div class="filter-tag">
+                        📅 Últimos precios
+                        <button onclick="dateFilter.value='all'; dateFilter.dispatchEvent(new Event('change'))">×</button>
+                    </div>
+                `;
+            } else if (filtrosActivos.modoFecha === 'specific' && filtrosActivos.fechaEspecifica) {
+                activeFiltersContainer.innerHTML += `
+                    <div class="filter-tag">
+                        📅 Fecha: ${filtrosActivos.fechaEspecifica}
+                        <button onclick="resetearFiltros()">×</button>
+                    </div>
+                `;
+            } else if (filtrosActivos.modoFecha === 'all') {
+                activeFiltersContainer.innerHTML += `
+                    <div class="filter-tag">
+                        📅 Histórico completo
+                        <button onclick="dateFilter.value='latest'; dateFilter.dispatchEvent(new Event('change'))">×</button>
+                    </div>
+                `;
+            }
+            
+            if (filtrosActivos.sucursal !== 'all') {
+                activeFiltersContainer.innerHTML += `
+                    <div class="filter-tag">
+                        🏪 Sucursal: ${filtrosActivos.sucursal}
+                        <button onclick="sucursalFilter.value='all'; sucursalFilter.dispatchEvent(new Event('change'))">×</button>
+                    </div>
+                `;
+            }
+            
+            if (!filtrosActivos.mostrarDescontinuados) {
+                activeFiltersContainer.innerHTML += `
+                    <div class="filter-tag">
+                        🚫 Descontinuados ocultos
+                        <button onclick="filtrosActivos.mostrarDescontinuados=true; showDiscontinuedButton.textContent='Ocultar Descontinuados'; aplicarFiltros()">×</button>
+                    </div>
+                `;
+            }
+            
+            // Mostrar ordenamiento activo
+            activeFiltersContainer.innerHTML += `
+                <div class="filter-tag">
+                    🔄 Orden: ${filtrosActivos.ordenamiento} ${filtrosActivos.ordenAscendente ? '↑' : '↓'}
+                </div>
+            `;
+        }
+
+        // Función mejorada para procesar CSV
+        function procesarCSV(textoCSV) {
+            const lineas = textoCSV.split('\n').filter(linea => linea.trim() !== '');
+            const datos = [];
+            
+            if (lineas.length === 0) {
+                throw new Error('El archivo está vacío');
+            }
+            
+            // Detectar delimitador (coma o tab)
+            const primeraLinea = lineas[0];
+            const usaTabs = primeraLinea.includes('\t') && !primeraLinea.includes(',');
+            const delimitador = usaTabs ? '\t' : ',';
+            
+            // Obtener encabezados
+            const encabezados = primeraLinea.split(delimitador).map(h => h.trim().toLowerCase());
+            
+            console.log('Encabezados detectados:', encabezados);
+            
+            // Verificar columnas requeridas
+            const columnasRequeridas = ['barcode', 'descripcion', 'proveedor_id', 'proveedor_nombre', 'precio', 'existencia', 'fecha'];
+            const columnasFaltantes = columnasRequeridas.filter(col => !encabezados.includes(col));
+            
+            if (columnasFaltantes.length > 0) {
+                throw new Error(`Faltan columnas requeridas: ${columnasFaltantes.join(', ')}`);
+            }
+            
+            // Procesar cada línea de datos
+            for (let i = 1; i < lineas.length; i++) {
+                const linea = lineas[i];
+                if (linea.trim() === '') continue;
+                
+                const valores = linea.split(delimitador);
+                const registro = {};
+                
+                // Asignar valores a encabezados
+                encabezados.forEach((encabezado, index) => {
+                    let valor = valores[index] ? valores[index].trim() : '';
+                    
+                    // Limpiar precio (remover $, espacios, etc.)
+                    if (encabezado === 'precio') {
+                        valor = valor.replace(/[^\d.-]/g, '').trim();
+                    }
+                    
+                    registro[encabezado] = valor;
+                });
+                
+                // Conversiones de tipos
+                registro.precio = parseFloat(registro.precio) || 0;
+                registro.existencia = parseInt(registro.existencia) || 0;
+                
+                // Validar datos básicos
+                if (registro.barcode && registro.descripcion) {
+                    datos.push(registro);
+                }
+            }
+            
+            console.log(`Procesados ${datos.length} registros`);
+            return datos;
+        }
+
+        // Función para cargar sucursales en el filtro
+        function cargarSucursales(datos) {
+            const sucursales = new Set();
+            
+            datos.forEach(registro => {
+                if (registro.proveedor_id) {
+                    sucursales.add(registro.proveedor_id);
+                }
+            });
+            
+            // Ordenar sucursales
+            const sucursalesOrdenadas = Array.from(sucursales).sort();
+            
+            // Limpiar y cargar opciones
+            sucursalFilter.innerHTML = '<option value="all">Todas las sucursales</option>';
+            sucursalesOrdenadas.forEach(sucursal => {
+                const option = document.createElement('option');
+                option.value = sucursal;
+                option.textContent = sucursal.toUpperCase();
+                sucursalFilter.appendChild(option);
+            });
+        }
+
+        // Función para indexar productos AGRUPANDO POR CÓDIGO DE BARRAS
+        function indexarProductos(datos) {
+            const productosPorCodigo = new Map();
+            
+            datos.forEach(registro => {
+                const codigoBarras = registro.barcode;
+                
+                if (!productosPorCodigo.has(codigoBarras)) {
+                    productosPorCodigo.set(codigoBarras, {
+                        barcode: codigoBarras,
+                        descripciones: new Set(),
+                        primeraDescripcion: registro.descripcion,
+                        proveedores: []
+                    });
+                }
+                
+                const producto = productosPorCodigo.get(codigoBarras);
+                
+                producto.descripciones.add(registro.descripcion);
+                
+                producto.proveedores.push({
+                    id: registro.proveedor_id,
+                    nombre: registro.proveedor_nombre,
+                    precio: registro.precio,
+                    stock: registro.existencia,
+                    fecha: registro.fecha,
+                    activo: registro.existencia > 0,
+                    descripcion: registro.descripcion
+                });
+            });
+            
+            return Array.from(productosPorCodigo.values()).map((producto, index) => {
+                // Ordenar proveedores por fecha (más reciente primero)
+                producto.proveedores.sort((a, b) => {
+                    return new Date(parsearFecha(b.fecha)) - new Date(parsearFecha(a.fecha));
+                });
+                
+                return {
+                    id: index + 1,
+                    nombre: producto.primeraDescripcion,
+                    descripcion: producto.primeraDescripcion,
+                    descripcionesAlternativas: Array.from(producto.descripciones),
+                    codigoBarras: producto.barcode,
+                    proveedores: producto.proveedores
+                };
+            });
+        }
+
+        // Función para parsear fechas en formato DD-MMM
+        function parsearFecha(fechaStr) {
+            if (!fechaStr) return new Date();
+            
+            const partes = fechaStr.split('-');
+            if (partes.length !== 2) return new Date();
+            
+            const dia = parseInt(partes[0]);
+            const mes = partes[1].toLowerCase();
+            
+            const meses = {
+                'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
+                'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+            };
+            
+            const año = new Date().getFullYear();
+            return new Date(año, meses[mes] || 0, dia);
+        }
+
+        // Función para aplicar filtros
+        function aplicarFiltros() {
+            if (productos.length === 0) return;
+            
+            productosFiltrados = productos.map(producto => {
+                const proveedoresFiltrados = producto.proveedores.filter(proveedor => {
+                    // Filtrar por fecha
+                    if (filtrosActivos.modoFecha === 'latest') {
+                        const proveedoresMismoId = producto.proveedores.filter(p => p.id === proveedor.id);
+                        const masReciente = proveedoresMismoId[0];
+                        return proveedor === masReciente;
+                    } else if (filtrosActivos.modoFecha === 'specific' && filtrosActivos.fechaEspecifica) {
+                        return proveedor.fecha.toLowerCase() === filtrosActivos.fechaEspecifica.toLowerCase();
+                    }
+                    
+                    return true;
+                }).filter(proveedor => {
+                    // Filtrar por sucursal
+                    if (filtrosActivos.sucursal !== 'all') {
+                        return proveedor.id === filtrosActivos.sucursal;
+                    }
+                    return true;
+                });
+                
+                // Filtrar descontinuados
+                if (!filtrosActivos.mostrarDescontinuados) {
+                    return {
+                        ...producto,
+                        proveedores: proveedoresFiltrados.filter(p => p.stock > 0)
+                    };
+                }
+                
+                return {
+                    ...producto,
+                    proveedores: proveedoresFiltrados
+                };
+            }).filter(producto => producto.proveedores.length > 0);
+            
+            // Agrupar por código de barras
+            productosAgrupados = agruparPorCodigoBarras(productosFiltrados);
+            
+            // Aplicar ordenamiento
+            aplicarOrdenamiento();
+            
+            actualizarFiltrosActivos();
+            
+            const termino = searchInput.value.trim();
+            if (termino) {
+                const resultados = buscarProductos(termino);
+                mostrarResultados(resultados);
+            } else {
+                mostrarResultados(productosAgrupados);
+            }
+        }
+
+        // Función para aplicar ordenamiento
+        function aplicarOrdenamiento() {
+            productosAgrupados.sort((a, b) => {
+                let valorA, valorB;
+                
+                switch (filtrosActivos.ordenamiento) {
+                    case 'precio':
+                        // Precio más bajo primero
+                        const precioMinA = Math.min(...a.proveedores.map(p => p.precio));
+                        const precioMinB = Math.min(...b.proveedores.map(p => p.precio));
+                        valorA = precioMinA;
+                        valorB = precioMinB;
+                        break;
+                        
+                    case 'fecha':
+                        // Fecha más reciente primero
+                        const fechaMaxA = Math.max(...a.proveedores.map(p => new Date(parsearFecha(p.fecha))));
+                        const fechaMaxB = Math.max(...b.proveedores.map(p => new Date(parsearFecha(p.fecha))));
+                        valorA = fechaMaxA;
+                        valorB = fechaMaxB;
+                        break;
+                        
+                    case 'existencia':
+                        // Mayor existencia primero
+                        const existenciaMaxA = Math.max(...a.proveedores.map(p => p.stock));
+                        const existenciaMaxB = Math.max(...b.proveedores.map(p => p.stock));
+                        valorA = existenciaMaxA;
+                        valorB = existenciaMaxB;
+                        break;
+                        
+                    default:
+                        return 0;
+                }
+                
+                if (filtrosActivos.ordenAscendente) {
+                    return valorA - valorB;
+                } else {
+                    return valorB - valorA;
+                }
+            });
+        }
+
+        // Función para agrupar productos por código de barras
+        function agruparPorCodigoBarras(productos) {
+            const agrupados = new Map();
+            
+            productos.forEach(producto => {
+                if (!agrupados.has(producto.codigoBarras)) {
+                    agrupados.set(producto.codigoBarras, {
+                        ...producto,
+                        descripcionesCombinadas: [...producto.descripcionesAlternativas]
+                    });
+                } else {
+                    const existente = agrupados.get(producto.codigoBarras);
+                    existente.proveedores = [...existente.proveedores, ...producto.proveedores];
+                    
+                    producto.descripcionesAlternativas.forEach(desc => {
+                        if (!existente.descripcionesCombinadas.includes(desc)) {
+                            existente.descripcionesCombinadas.push(desc);
+                        }
+                    });
+                }
+            });
+            
+            return Array.from(agrupados.values());
+        }
+
+        // Función para cargar y procesar el archivo
+        function cargarArchivo(archivo) {
+            return new Promise((resolve, reject) => {
+                const lector = new FileReader();
+                
+                lector.onload = function(e) {
+                    try {
+                        const datosCSV = procesarCSV(e.target.result);
+                        const productosIndexados = indexarProductos(datosCSV);
+                        resolve(productosIndexados);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                lector.onerror = function() {
+                    reject(new Error('Error al leer el archivo'));
+                };
+                
+                lector.readAsText(archivo, 'UTF-8');
+            });
+        }
+
+        // Función para buscar productos
+        function buscarProductos(termino) {
+            if (!termino || productosFiltrados.length === 0) return [];
+            
+            const terminoLower = termino.toLowerCase();
+            
+            const productosEncontrados = productosFiltrados.filter(producto => {
+                if (producto.codigoBarras === termino) {
+                    return true;
+                }
+                
+                return producto.nombre.toLowerCase().includes(terminoLower) || 
+                       producto.descripcion.toLowerCase().includes(terminoLower) ||
+                       producto.descripcionesAlternativas.some(desc => 
+                           desc.toLowerCase().includes(terminoLower));
+            });
+            
+            const resultadosAgrupados = agruparPorCodigoBarras(productosEncontrados);
+            
+            // Aplicar ordenamiento a los resultados de búsqueda
+            resultadosAgrupados.sort((a, b) => {
+                let valorA, valorB;
+                
+                switch (filtrosActivos.ordenamiento) {
+                    case 'precio':
+                        valorA = Math.min(...a.proveedores.map(p => p.precio));
+                        valorB = Math.min(...b.proveedores.map(p => p.precio));
+                        break;
+                    case 'fecha':
+                        valorA = Math.max(...a.proveedores.map(p => new Date(parsearFecha(p.fecha))));
+                        valorB = Math.max(...b.proveedores.map(p => new Date(parsearFecha(p.fecha))));
+                        break;
+                    case 'existencia':
+                        valorA = Math.max(...a.proveedores.map(p => p.stock));
+                        valorB = Math.max(...b.proveedores.map(p => p.stock));
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                return filtrosActivos.ordenAscendente ? valorA - valorB : valorB - valorA;
+            });
+            
+            return resultadosAgrupados;
+        }
+
+        // Función para ordenar proveedores por precio (dentro de cada producto)
+        function ordenarProveedores(proveedores) {
+            return proveedores.sort((a, b) => a.precio - b.precio);
+        }
+
+        // Función para mostrar resultados
+        function mostrarResultados(productosEncontrados) {
+            resultsContainer.innerHTML = '';
+            searchInfo.innerHTML = '';
+            
+            if (productosEncontrados.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <h3>No se encontraron productos</h3>
+                        <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+                    </div>
+                `;
+                resultsCount.textContent = '0 productos encontrados';
+                resultsTitle.textContent = 'Resultados de búsqueda';
+                return;
+            }
+            
+            resultsCount.textContent = `${productosEncontrados.length} producto(s) encontrado(s)`;
+            const searchTerm = searchInput.value.trim();
+            resultsTitle.textContent = searchTerm ? 
+                `Resultados para: "${searchTerm}"` : 'Todos los productos';
+            
+            const productosConMultiplesDesc = productosEncontrados.filter(p => 
+                p.descripcionesCombinadas && p.descripcionesCombinadas.length > 1);
+            
+            if (productosConMultiplesDesc.length > 0 && searchTerm) {
+                searchInfo.innerHTML = `
+                    <div class="search-info">
+                        <strong>Nota:</strong> Algunos productos tienen múltiples descripciones. 
+                        Se muestran agrupados por código de barras para mejor comparación.
+                    </div>
+                `;
+            }
+            
+            productosEncontrados.forEach(producto => {
+                const proveedoresOrdenados = ordenarProveedores([...producto.proveedores]);
+                
+                const proveedoresHTML = proveedoresOrdenados.map(proveedor => {
+                    const esDescontinuado = proveedor.stock === 0;
+                    const claseDescontinuado = esDescontinuado ? 'discontinued' : '';
+                    const clasePrecio = esDescontinuado ? 'old-price' : '';
+                    
+                    return `
+                    <div class="provider-item ${claseDescontinuado}">
+                        <div class="provider-info">
+                            <span class="provider-name">${proveedor.id.toUpperCase()}: ${proveedor.nombre}</span>
+                            <div class="provider-date">Fecha: ${proveedor.fecha}</div>
+                        </div>
+                        <div class="provider-details">
+                            <span class="provider-price ${clasePrecio}">$${proveedor.precio.toFixed(2)}</span>
+                            <span class="provider-stock">${proveedor.stock} piezas</span>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+                
+                let descripcionesInfo = '';
+                if (producto.descripcionesCombinadas && producto.descripcionesCombinadas.length > 1) {
+                    descripcionesInfo = `
+                        <div style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                            <strong>También conocido como:</strong> 
+                            ${producto.descripcionesCombinadas.slice(1).join(', ')}
+                        </div>
+                    `;
+                }
+                
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-header">
+                        <div>
+                            <div class="product-name">${producto.nombre}</div>
+                            <div class="product-description">${producto.descripcion}</div>
+                            ${descripcionesInfo}
+                        </div>
+                        <div class="barcode">Código: ${producto.codigoBarras}</div>
+                    </div>
+                    <div class="providers-list">
+                        ${proveedoresHTML}
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(productCard);
+            });
+        }
+
+        // EVENT LISTENER PRINCIPAL CORREGIDO
+        loadButton.addEventListener('click', async () => {
+            const archivo = csvFileInput.files[0];
+            
+            if (!archivo) {
+                uploadStatus.textContent = 'Por favor selecciona un archivo CSV';
+                uploadStatus.className = 'status error';
+                return;
+            }
+            
+            if (!archivo.name.toLowerCase().endsWith('.csv')) {
+                uploadStatus.textContent = 'Por favor selecciona un archivo CSV válido';
+                uploadStatus.className = 'status error';
+                return;
+            }
+            
+            try {
+                loadingIndicator.style.display = 'block';
+                uploadStatus.textContent = 'Procesando archivo...';
+                uploadStatus.className = 'status';
+                
+                loadButton.disabled = true;
+                
+                // ESTA ES LA LÍNEA CLAVE - procesar los datos
+                productos = await cargarArchivo(archivo);
+                
+                // Cargar sucursales en el filtro
+                cargarSucursales(productos.flatMap(p => p.proveedores));
+                
+                productosFiltrados = [...productos];
+                productosAgrupados = agruparPorCodigoBarras(productos);
+                
+                uploadStatus.textContent = `¡Datos cargados exitosamente! ${productos.length} productos procesados`;
+                uploadStatus.className = 'status success';
+                
+                searchInput.disabled = false;
+                searchButton.disabled = false;
+                searchInput.placeholder = `Buscar entre ${productos.length} productos...`;
+                
+                aplicarFiltros();
+                resultsCount.textContent = `${productosAgrupados.length} productos únicos - Listo para buscar`;
+                
+            } catch (error) {
+                uploadStatus.textContent = `Error al procesar el archivo: ${error.message}`;
+                uploadStatus.className = 'status error';
+                console.error('Error:', error);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                loadButton.disabled = false;
+            }
+        });
+
+        searchButton.addEventListener('click', () => {
+            const termino = searchInput.value.trim();
+            const resultados = buscarProductos(termino);
+            mostrarResultados(resultados);
+        });
+        
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const termino = searchInput.value.trim();
+                const resultados = buscarProductos(termino);
+                mostrarResultados(resultados);
+            }
+        });
+    
+// --- Persistencia simple usando localStorage ---
+const LOCAL_CSV_KEY = 'buscador_csv_v1';
+
+// Botones nuevos
+const useSavedButton = document.getElementById('useSavedButton');
+const saveToAppButton = document.getElementById('saveToAppButton');
+
+// Al iniciar la página: si existe CSV guardado, cargarlo automáticamente
+window.addEventListener('load', () => {
+  try {
+    const csvGuardado = localStorage.getItem(LOCAL_CSV_KEY);
+    if (csvGuardado) {
+      const datosCSV = procesarCSV(csvGuardado);
+      productos = indexarProductos(datosCSV);
+      cargarSucursales(productos.flatMap(p => p.proveedores));
+      productosFiltrados = [...productos];
+      productosAgrupados = agruparPorCodigoBarras(productos);
+      searchInput.disabled = false;
+      searchButton.disabled = false;
+      searchInput.placeholder = `Buscar entre ${productos.length} productos...`;
+      aplicarFiltros();
+      resultsCount.textContent = `${productosAgrupados.length} productos únicos - CSV cargado desde la app`;
+      uploadStatus.textContent = 'CSV cargado desde almacenamiento local de la app';
+      uploadStatus.className = 'status info';
+    }
+  } catch (err) {
+    console.warn('Error al procesar CSV guardado:', err);
+  }
+});
+
+// Función para guardar el CSV en localStorage
+async function guardarCSVEnApp() {
+  const archivo = csvFileInput.files[0];
+  if (archivo) {
+    try {
+      const texto = await archivo.text();
+      localStorage.setItem(LOCAL_CSV_KEY, texto);
+      uploadStatus.textContent = 'CSV guardado dentro de la app (localStorage)';
+      uploadStatus.className = 'status success';
+    } catch (err) {
+      uploadStatus.textContent = 'Error al leer el archivo: ' + err.message;
+      uploadStatus.className = 'status error';
+    }
+  } else {
+    if (productos && productos.length > 0) {
+      if (confirm('No seleccionaste un archivo. ¿Deseas guardar el CSV actualmente cargado (reconstruido) en la app?')) {
+        let filas = ['barcode,descripcion,proveedor_id,proveedor_nombre,precio,existencia,fecha'];
+        productos.flatMap(p => p.proveedores).forEach(pr => {
+          const desc = (pr.descripcion || '').toString().replace(/,/g, ' ');
+          const nombre = (pr.nombre || '').toString().replace(/,/g, ' ');
+          filas.push(`${p.codigoBarras || ''},${desc},${pr.id || ''},${nombre},${pr.precio || 0},${pr.stock || 0},${pr.fecha || ''}`);
+        });
+        const textoReconstruido = filas.join('\\n');
+        localStorage.setItem(LOCAL_CSV_KEY, textoReconstruido);
+        uploadStatus.textContent = 'CSV reconstruido y guardado dentro de la app (localStorage)';
+        uploadStatus.className = 'status success';
+      }
+    } else {
+      uploadStatus.textContent = 'No hay datos cargados para guardar. Selecciona un archivo primero.';
+      uploadStatus.className = 'status error';
+    }
+  }
+}
+
+// Botón: guardar en la app
+if (saveToAppButton) {
+  saveToAppButton.addEventListener('click', guardarCSVEnApp);
+}
+
+// Botón: usar CSV guardado en la app (carga inmediata)
+if (useSavedButton) {
+  useSavedButton.addEventListener('click', () => {
+    const csvGuardado = localStorage.getItem(LOCAL_CSV_KEY);
+    if (!csvGuardado) {
+      uploadStatus.textContent = 'No hay CSV guardado en la app.';
+      uploadStatus.className = 'status error';
+      return;
+    }
+    try {
+      const datosCSV = procesarCSV(csvGuardado);
+      productos = indexarProductos(datosCSV);
+      cargarSucursales(productos.flatMap(p => p.proveedores));
+      productosFiltrados = [...productos];
+      productosAgrupados = agruparPorCodigoBarras(productos);
+      searchInput.disabled = false;
+      searchButton.disabled = false;
+      searchInput.placeholder = `Buscar entre ${productos.length} productos...`;
+      aplicarFiltros();
+      uploadStatus.textContent = 'CSV cargado desde almacenamiento local de la app';
+      uploadStatus.className = 'status success';
+    } catch (err) {
+      uploadStatus.textContent = 'Error al procesar el CSV guardado: ' + err.message;
+      uploadStatus.className = 'status error';
+    }
+  });
+}
+</script>
+</body>
+</html>
